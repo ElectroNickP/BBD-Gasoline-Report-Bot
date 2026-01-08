@@ -1,22 +1,24 @@
 """
 Handlers for analytics and reports viewing
 """
+from datetime import date, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 from services.analytics_service import analytics_service, PeriodFilter
+from services.image_report_service import image_report_service
 
 
 def get_analytics_menu_keyboard() -> InlineKeyboardMarkup:
     """Analytics main menu"""
     keyboard = [
+        [InlineKeyboardButton("📊 Daily Report", callback_data="report_img:daily")],
+        [InlineKeyboardButton("📈 Weekly Report", callback_data="report_img:weekly")],
+        [InlineKeyboardButton("📅 Monthly Report", callback_data="report_img:monthly")],
         [InlineKeyboardButton("🚤 By Boats", callback_data="analytics:boats")],
         [InlineKeyboardButton("👨‍✈️ By Captains", callback_data="analytics:captains")],
-        [InlineKeyboardButton("🏝 By Programs", callback_data="analytics:programs")],
         [InlineKeyboardButton("🏆 Efficiency Ranking", callback_data="analytics:ranking")],
-        [InlineKeyboardButton("📋 Reports by Period", callback_data="analytics:reports")],
-        [InlineKeyboardButton("📊 Period Summary", callback_data="analytics:summary")],
-        [InlineKeyboardButton("📥 Export to CSV", callback_data="analytics:export")],
+        [InlineKeyboardButton("📥 Export CSV", callback_data="analytics:export")],
         [InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -156,6 +158,61 @@ async def handle_analytics_callback(update: Update, context: ContextTypes.DEFAUL
         reply_markup=get_back_to_analytics_keyboard(),
         parse_mode='Markdown'
     )
+
+
+async def handle_report_image_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle report image generation callbacks"""
+    query = update.callback_query
+    await query.answer("Generating report...")
+    
+    data = query.data.split(":")
+    report_type = data[1] if len(data) > 1 else ""
+    
+    try:
+        if report_type == "daily":
+            # Generate for today
+            img = await image_report_service.generate_daily_report()
+            caption = "📊 Daily Fuel Report"
+        elif report_type == "daily_yesterday":
+            from datetime import date, timedelta
+            yesterday = date.today() - timedelta(days=1)
+            img = await image_report_service.generate_daily_report(yesterday)
+            caption = f"📊 Report for {yesterday.strftime('%d.%m.%Y')}"
+        elif report_type == "weekly":
+            img = await image_report_service.generate_weekly_report()
+            caption = "📈 Weekly Fuel Report (Last 7 days)"
+        elif report_type == "monthly":
+            img = await image_report_service.generate_monthly_report()
+            caption = "📅 Monthly Fuel Report"
+        else:
+            await query.edit_message_text("Unknown report type")
+            return
+        
+        await query.message.reply_photo(
+            photo=img,
+            caption=f"{caption}\n\n_Ready to forward to management_",
+            parse_mode='Markdown'
+        )
+        
+        # Show option for yesterday's report if daily
+        if report_type == "daily":
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("📊 Yesterday's Report", callback_data="report_img:daily_yesterday")],
+                [InlineKeyboardButton("⬅️ Analytics Menu", callback_data="analytics:menu")]
+            ])
+        else:
+            keyboard = get_back_to_analytics_keyboard()
+        
+        await query.edit_message_text(
+            "✅ Report generated!\n\nForward the image above to your management.",
+            reply_markup=keyboard
+        )
+        
+    except Exception as e:
+        await query.edit_message_text(
+            f"❌ Error generating report: {str(e)}",
+            reply_markup=get_back_to_analytics_keyboard()
+        )
 
 
 async def handle_export_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

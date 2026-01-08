@@ -16,7 +16,12 @@ from services.user_service import user_service
 from bot.handlers.start import start_command, help_command, handle_main_menu, back_to_main_menu
 from bot.handlers.report import get_report_conversation_handler
 from bot.handlers.history import show_history
-from bot.handlers.analytics import show_analytics_menu, handle_analytics_callback, handle_export_callback
+from bot.handlers.analytics import (
+    show_analytics_menu, 
+    handle_analytics_callback, 
+    handle_export_callback,
+    handle_report_image_callback
+)
 from bot.keyboards import get_main_menu_keyboard
 
 # Настройка логирования
@@ -79,6 +84,12 @@ def main():
     application.add_handler(CallbackQueryHandler(
         handle_export_callback,
         pattern=r'^export:'
+    ))
+    
+    # Callback handler for report images
+    application.add_handler(CallbackQueryHandler(
+        handle_report_image_callback,
+        pattern=r'^report_img:'
     ))
     
     # Callback handler для возврата в главное меню
