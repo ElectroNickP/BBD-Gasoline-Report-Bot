@@ -1,0 +1,42 @@
+# Справочники BBD Gasoline Report
+# Редактируйте этот файл для добавления/удаления значений
+
+captains:
+  - Tax
+  - Chay
+  - Mean
+  - Bas
+  - PU
+  - Leab
+  - Wit
+  - Sun
+
+boats:
+  - Neptune
+  - Plawan
+  - Mishell
+  - Nisa
+  - Bluefin
+  - Nalin
+  - PhimJan
+  - Terquesa
+  - Neo
+
+programs:
+  - Similan
+  - Phi Phi Bamboo
+  - Phi Phi Sunrise
+  - 5 Pearls
+  - 4 Pearls
+  - Krabi
+  - 11 Islands
+  - PP OVN
+  - N/A
+
+piers:
+  - RPM
+  - Yamu
+  - Sarasin
+  - Chalong
+  - Rawai
+  
